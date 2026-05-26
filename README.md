@@ -53,11 +53,22 @@ The audio goes through **three stages** before it reaches your speakers:
 
 A `.wav` file isn't just audio data — it's a structured binary container. The parser needs to navigate through it intelligently:
 
-<p align="center">
-  <img src="docs/wav_structure.png" alt="WAV Binary Structure" width="380"/>
-</p>
+<img align="left" src="docs/wav_structure.png" alt="WAV Binary Structure" width="380" />
 
 **Key idea:** The parser doesn't assume fixed positions. It reads chunk headers one by one, grabs what it needs (`fmt` and `data`), and skips everything else (`LIST`, `JUNK`, `bext`, etc.). This makes it work with WAV files from different sources — not just perfectly formatted ones.
+
+   - [READ ] RIFF header → validated "RIFF" + "WAVE" markers ✓
+   
+   - [READ ] chunk: "fmt " (16 bytes) → extracted: PCM, 2ch, 44100Hz, 16-bit ✓
+
+   - [SKIP ] chunk: "LIST" (126 bytes) → fseek(126, SEEK_CUR)
+   
+   - [SKIP ] chunk: "JUNK" (32 bytes) → fseek(32, SEEK_CUR)
+
+   - [READ ] chunk: "data" (1843200 bytes) → stored offset, break ✓
+
+
+<br clear="left"/>
 
 ---
 
@@ -65,11 +76,11 @@ A `.wav` file isn't just audio data — it's a structured binary container. The 
 
 C doesn't have garbage collection, so this project handles it manually using a **linked list tracker**:
 
-<p align="center">
-  <img src="docs/memory_management.png" alt="Memory Management System" width="420"/>
-</p>
+
+  <img align="left" src="docs/memory_management.png" alt="Memory Management System" width="420"/>
 
 Every dynamic allocation (string buffers, user inputs) gets registered into a linked list. At shutdown, `ll_free()` walks the entire chain and frees everything. No leaks.
+<br clear="left"/>
 
 ---
 
@@ -137,12 +148,14 @@ The program will prompt you for a file path. Enter the path to any `.wav` file a
 
 ## Demo
 
-<p align="center">
-  <video src="docs/output.mp4" width="600" controls></video>
-</p>
+
+
+https://github.com/user-attachments/assets/1793b326-e359-4834-8a6d-0eb0a014d205
+
+
 
 ---
 
 ## License
 
-This project is open source. Do whatever you want with it.
+This project is open source. Developed by TANISH SHIVHARE [TANISHX1] .
