@@ -1,0 +1,40 @@
+# ─── Compiled Binaries & Executables ───
+*.out
+*.o
+*.obj
+*.exe
+*.elf
+*.bin
+*.app
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# ELF binaries without extension (project-specific)
+wav_player_pa
+
+# ─── Build Artifacts ───
+*.d
+*.gch
+*.pch
+build/
+out/
+
+# ─── Debug Files ───
+*.dSYM/
+*.su
+*.idb
+*.pdb
+core
+vgcore.*
+
+# ─── OS & Editor Junk ───
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
