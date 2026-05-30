@@ -25,7 +25,7 @@ int16_t* read_wav_data(const char* filename, wav_header_t** header) {
     // Read RIFF chunk
     if (fread(&((*header)->riff), 1, sizeof(riff_header_t), file) < sizeof(riff_header_t)) {
         puts("[Error] : Failed to read RIFF header\n");
-        free(header);
+        free(*header);
         fclose(file);
         return NULL;
         }
@@ -155,8 +155,13 @@ int main(int argv, char* argc[]) {
         special_print(ERROR, "playbackdata", "Failed to allocate memory ");
         return 1;
         }
+    ll_node_insert(&head_input, play_data, debug);
     play_data->total_sample = (header->bytes_to_read / (header->fmt.bits_per_sample / 8));
     play_data->normalized_data = normalization(data, play_data->total_sample, debug);
+    if (!play_data->normalized_data) {
+        special_print(ERROR, "Normalization", "Failed to Normalise Data");
+        return 1;
+        }
     play_data->current_sample = 0;
     free(data);
     print_header_info(header);
@@ -213,6 +218,7 @@ int main(int argv, char* argc[]) {
     Pa_CloseStream(stream);
     // free heap memory and terminating the portaudio
     free(header);
+    
     Pa_Terminate();
     ll_free(head_input, debug);
 

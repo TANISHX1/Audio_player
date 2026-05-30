@@ -50,7 +50,7 @@ typedef struct
 
 typedef struct node
     {
-    char* address;
+    void* address;
     struct node* next;
     }node;
 

@@ -15,21 +15,21 @@ node* head_input = NULL;
 
 // function decleration 
 void special_print(int type, char* category, char* msg);
-char* ll_node_insert(node** head, char* address,bool debug);
+char* ll_node_insert(node** head, void* address, bool debug);
 
 // 1. Type-specific underlying functions
 char* int_to_str(int val) {
     int len = snprintf(NULL, 0, "%d", val);
     char* str = (char*)malloc(len + 1);
     if (str) snprintf(str, len + 1, "%d", val);
-    ll_node_insert(&head_input, str,debug);
+    ll_node_insert(&head_input, str, debug);
     return str;
     }
 
 char* size_to_str(size_t val) {
     int len = snprintf(NULL, 0, "%zu", val);
     char* str = (char*)malloc(len + 1);
-    ll_node_insert(&head_input, str,debug);
+    ll_node_insert(&head_input, str, debug);
     if (str) snprintf(str, len + 1, "%zu", val);
     return str;
     }
@@ -38,7 +38,7 @@ char* float_to_str(float val) {
     int len = snprintf(NULL, 0, "%f", val);
     char* str = (char*)malloc(len + 1);
     if (str) snprintf(str, len + 1, "%f", val);
-    ll_node_insert(&head_input, str,debug);
+    ll_node_insert(&head_input, str, debug);
     return str;
     }
 
@@ -52,31 +52,20 @@ char* float_to_str(float val) {
 
 
 
-char* ll_node_insert(node** head, char* address,bool debug) {
+char* ll_node_insert(node** head, void* address, bool debug) {
     node* new_node = (node*)malloc(sizeof(node));
     if (!new_node) {
         puts(FG_BRED"LL_node insertion Failed"RESET);
         return NULL;
         }
-    new_node->address = address;
-    new_node->next = NULL;
-    if (*head == NULL) {
-        *head = new_node;
-        return address;
-        }
-    node* pos = *head;
-    while (pos->next != NULL) {
-        pos = pos->next;
-        }
-    pos->next = new_node;
+    new_node->address = (void*)address;
+    new_node->next = *head;
+    *head = new_node;
+
     if (debug) {
-        pos = *head;
-        while (pos != NULL) {
-            special_print(DEBUG, "ll_node_insertion {Transversing the linkedlist }", pos->address);
-            pos = pos->next;
-            }
+        special_print(DEBUG, "ll_node_insertion {Transversing the linkedlist }", (*head)->address);
         }
-    return address;
+    return (char*)address;
     }
 
 void ll_free(node* head, bool debug) {
@@ -103,21 +92,22 @@ void ll_free(node* head, bool debug) {
 
 char* read_input(bool debug) {
     char buffer[128];
-    
+
     fgets(buffer, 128, stdin);
     uint8_t size = strlen(buffer);
     if (size > 1 && buffer[size - 1] == '\n') {
         buffer[size - 1] = '\0';
         size--;
         }
-    char* input = ll_node_insert(&head_input, (char*)strdup(buffer),debug);
-    if(debug) printf("from read_line : %s\n", input);
+    char* input = ll_node_insert(&head_input, (char*)strdup(buffer), debug);
+    if (debug) printf("from read_line : %s\n", input);
     return input;
     }
 
 float* normalization(int16_t* data, size_t samples, bool debug) {
 
     float* data_new = (float*)malloc(samples * sizeof(float));
+    ll_node_insert(&head_input, data_new, debug);
 
     if (!data_new) {
         special_print(ERROR, "normilization", "Failed to Allocate Memory");

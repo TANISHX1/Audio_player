@@ -18,17 +18,6 @@
 
 ---
 
-## What Is This?
-
-This is a command-line WAV file player built from scratch in C.  
-No external audio libraries for decoding — just raw binary file parsing and PortAudio for output.
-
-**Give it a `.wav` file → it reads the binary data → normalizes the audio → plays it through your speakers.**
-
-That's it. Simple, fast, no bloat.
-
----
-
 ## How It Works
 
 The player follows a straightforward pipeline. Here's the full picture:
@@ -86,7 +75,7 @@ Every dynamic allocation (string buffers, user inputs) gets registered into a li
 
 ## Project Structure
 
-```
+```bash
 Audio_player/
 ├── wav_player.c          # Main program — parsing, playback, entry point
 ├── data_structure.h      # All struct definitions (WAV headers, nodes, playback data)
