@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="docs/pipeline_architecture.png" alt="WAV Player Pipeline" width="520"/>
-</p>
-
 <h1 align="center">WAV Audio Player</h1>
 
 <p align="center">
@@ -46,15 +42,15 @@ A `.wav` file isn't just audio data — it's a structured binary container. The 
 
 **Key idea:** The parser doesn't assume fixed positions. It reads chunk headers one by one, grabs what it needs (`fmt` and `data`), and skips everything else (`LIST`, `JUNK`, `bext`, etc.). This makes it work with WAV files from different sources — not just perfectly formatted ones.
 
-   - [READ ] RIFF header → validated "RIFF" + "WAVE" markers ✓
+   - [ READ ] RIFF header → validated "RIFF" + "WAVE" markers 
    
-   - [READ ] chunk: "fmt " (16 bytes) → extracted: PCM, 2ch, 44100Hz, 16-bit ✓
+   - [ READ ] chunk: "fmt " (16 bytes) → extracted: PCM, 2ch, 44100Hz, 16-bit 
 
-   - [SKIP ] chunk: "LIST" (126 bytes) → fseek(126, SEEK_CUR)
+   - [ SKIP ] chunk: "LIST" (126 bytes) → fseek(126, SEEK_CUR)
    
-   - [SKIP ] chunk: "JUNK" (32 bytes) → fseek(32, SEEK_CUR)
+   - [ SKIP ] chunk: "JUNK" (32 bytes) → fseek(32, SEEK_CUR)
 
-   - [READ ] chunk: "data" (1843200 bytes) → stored offset, break ✓
+   - [ READ ] chunk: "data" (1843200 bytes) → stored offset, break 
 
 
 <br clear="left"/>
