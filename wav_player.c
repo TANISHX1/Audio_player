@@ -6,6 +6,8 @@
 #include "data_structure.h"
 #include "decor.h"
 #include "helper_functions.h"
+#include <ncurses.h>
+#include <locale.h>
 
 // to read WAV FILE
 __chunks essential_chunks;
@@ -120,12 +122,13 @@ static int callback_function(const void* input, void* output, unsigned long fram
     playbackdata* data = (playbackdata*)userData;
     float* out = (float*)output;
     for (unsigned long i = 0; i < framecount * data->channels;i++) {
-        if (data->current_sample < data->total_sample) {
-            out[i] = data->normalized_data[data->current_sample++];
+        if (data->is_playing && data->current_sample < data->total_sample) {
+            out[i] = data->normalized_data[data->current_sample++] * data->volume;
 
             }
         else {
-            out[i] = 0.0f;
+            // Optimal way to output pure silence
+            memset(output, 0, framecount * data->channels * sizeof(float));
             }
         }
     return paContinue;
@@ -133,6 +136,7 @@ static int callback_function(const void* input, void* output, unsigned long fram
     }
 
 int main(int argv, char* argc[]) {
+    setlocale(LC_ALL, "");
     if (argv > 2) {
         puts("Usage: ./wav_player < option [D/d : Flag for Dubug] >");
         return 1;
@@ -144,17 +148,20 @@ int main(int argv, char* argc[]) {
 
     printf("Enter the file path : \t");
     char* input = read_input(debug);
-    if (debug) printf("path : %s\n", input);
 
     // Read headers
     wav_header_t* header = NULL;
     int16_t* data = read_wav_data(input, &header);
     if (!data) { return 1; }
+    // initalize playback data 
     playbackdata* play_data = (playbackdata*)malloc(sizeof(playbackdata));
     if (!play_data) {
         special_print(ERROR, "playbackdata", "Failed to allocate memory ");
         return 1;
         }
+    play_data->is_playing = true;
+    play_data->volume = 0.75f;
+
     ll_node_insert(&head_input, play_data, debug);
     play_data->total_sample = (header->bytes_to_read / (header->fmt.bits_per_sample / 8));
     play_data->normalized_data = normalization(data, play_data->total_sample, debug);
@@ -165,6 +172,7 @@ int main(int argv, char* argc[]) {
     play_data->current_sample = 0;
     free(data);
     print_header_info(header);
+
 
     // port audio initialization 
     PaError err = Pa_Initialize();
@@ -179,8 +187,8 @@ int main(int argv, char* argc[]) {
     if (device == paNoDevice) {
         special_print(ERROR, "Port_audio", "No valid output device selected or available.");
         return 1;
-    }
-    
+        }
+
     // Print the detailed table for the chosen device
     device_info(device);
 
@@ -214,13 +222,110 @@ int main(int argv, char* argc[]) {
     special_print(INFO_PRINT, "Playing Audio", "......");
     // start stream 
     Pa_StartStream(stream);
-    Pa_Sleep(duration*1000 + 30);
+
+    // ==========================================
+    //          1. INITIALIZE NCURSES
+    // ==========================================
+    initscr();              // Start ncurses mode
+    cbreak();               // Disable line buffering (react instantly)
+    noecho();               // Don't print typed keys to the screen
+    nodelay(stdscr, TRUE);  // Make getch() non-blocking
+    curs_set(0);            // Hide the terminal cursor
+    start_color();
+    use_default_colors();
+    init_pair(1, COLOR_GREEN, -1);
+    bool engine_running = true;
+
+    // 2. THE MAIN ENGINE LOOP
+    // ==========================================
+    while (engine_running && play_data->current_sample < play_data->total_sample) {
+
+        // --- Input Handling ---
+        int ch = getch();
+        if (ch == 'q' || ch == 'Q') {
+            engine_running = false;
+            }
+        else if (ch == 'p' || ch == 'P') {
+            play_data->is_playing = !play_data->is_playing;
+            }
+        else if (ch == '+' || ch == '=') {
+            // REASONING: Cap max volume at 1.0f to prevent digital clipping (distortion)
+            if (play_data->volume < 1.0f) play_data->volume += 0.05f;
+            }
+        else if (ch == '-') {
+            // REASONING: Cap min volume at 0.0f to prevent phase inversion (negative volume)
+            if (play_data->volume > 0.0f) play_data->volume -= 0.05f;
+            }
+
+        // --- Dynamic Centering Math ---
+        int max_y, max_x;
+        getmaxyx(stdscr, max_y, max_x); // Fetches current terminal dimensions
+
+        int box_width = 45;
+        int box_height = 9;
+
+        // Calculate top-left corner coordinates to perfectly center the box
+        int start_y = (max_y - box_height) / 2;
+        int start_x = (max_x - box_width) / 2;
+
+        // --- UI Rendering ---
+        erase(); // Use erase() instead of clear() to prevent screen flickering
+
+        float current_sec = (float)play_data->current_sample / (header->fmt.sample_rate * header->fmt.audio_channels);
+        int vol_percent = (int)(play_data->volume * 100);
+
+        // Use the dynamic offsets (start_y, start_x) for all drawing
+        mvprintw(start_y + 0, start_x, "┌───────────────────────────────────────────┐");
+        mvprintw(start_y + 1, start_x, "│          WAV Audio Engine (TUI)           │");
+        mvprintw(start_y + 2, start_x, "├───────────────────────────────────────────┤");
+
+        if (play_data->is_playing) {
+            mvprintw(start_y + 3, start_x, "│  Status   : [ ▶ PLAYING ]                 │");
+            }
+        else {
+            mvprintw(start_y + 3, start_x, "│  Status   : [ ⏸ PAUSED  ]                 │");
+            }
+
+        mvprintw(start_y + 4, start_x, "│  Volume   : %3d%%                          │", vol_percent);
+        mvprintw(start_y + 5, start_x, "│  Time     : %6.2fs / %5.2fs             │", current_sec, duration);
+        mvprintw(start_y + 6, start_x, "│  Controls : [P] Play/Pause | [Q] Quit     │");
+        mvprintw(start_y + 7, start_x, "│             [+/-] Volume                  │");
+        mvprintw(start_y + 8, start_x, "└───────────────────────────────────────────┘");
+
+        // Render a visual progress bar (Centered just below the box)
+        int bar_width = 30;
+        int progress_chars = (int)((current_sec / duration) * bar_width);
+        mvprintw(start_y + 10, start_x + 2, "Progress: [");
+        for (int i = 0; i < bar_width; i++) {
+                if (i < progress_chars) {
+                    attron(COLOR_PAIR(1));  // Turn Green Background ON
+                    printw("#");            // Print a space (it will be solid green)
+                    attroff(COLOR_PAIR(1)); // Turn Green Background OFF
+                    }
+                else {
+                    printw("-");
+                    }
+            }
+        
+        printw("]");
+
+        refresh();
+
+        // --- Prevent CPU Overload ---
+        Pa_Sleep(30);
+        }
+    // ==========================================
+    // 3. CLEANUP NCURSES 
+    // ==========================================
+    curs_set(1); //  Bring the blinking terminal cursor back
+    endwin();    //  Shut down ncurses and restore normal terminal behavior
+
     // stop && clse Stream 
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
     // free heap memory and terminating the portaudio
     free(header);
-    
+
     Pa_Terminate();
     ll_free(head_input, debug);
 

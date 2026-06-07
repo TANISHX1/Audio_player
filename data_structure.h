@@ -58,7 +58,9 @@ typedef struct {
     float* normalized_data;
     size_t total_sample;
     size_t current_sample;
+    bool is_playing;
     uint8_t channels;
+    float volume;
     }playbackdata;
 
 #endif

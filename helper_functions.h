@@ -100,7 +100,7 @@ char* read_input(bool debug) {
         size--;
         }
     char* input = ll_node_insert(&head_input, (char*)strdup(buffer), debug);
-    if (debug) printf("from read_line : %s\n", input);
+    if (debug) special_print(DEBUG, "read_input", input);
     return input;
     }
 
