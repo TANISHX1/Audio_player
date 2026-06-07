@@ -172,7 +172,62 @@ void print_header_info(wav_header_t* header) {
     printf(FG_BGREEN "\t\t└─────────────────────────────────────────────────┘\n" RESET);
     }
 
+// Add this above your device_info() function
+PaDeviceIndex select_output_device(bool debug) {
+    int num_devices = Pa_GetDeviceCount();
+    if (num_devices < 0) {
+        special_print(ERROR, "Port_Audio", "Failed to get device count from OS.");
+        return paNoDevice;
+        }
 
+    PaDeviceIndex default_dev = Pa_GetDefaultOutputDevice();
+
+    printf("\n" FG_BYELLOW "=== Available Output Devices ===" RESET "\n");
+
+    // 1. Discovery & Filtering Loop
+    for (int i = 0; i < num_devices; i++) {
+        const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+        // get host api which provides this device
+        const PaHostApiInfo* api_info = Pa_GetHostApiInfo(info->hostApi);
+        // 2. Filter: Only show devices that support Output
+        if (info->maxOutputChannels > 0) {
+            // Highlight the default device
+            if (i == default_dev) {
+                printf(FG_BGREEN " [%d] %s (Default) " RESET "\n", i, info->name);
+                }
+            else {
+                printf(FG_BWHITE " [%d]" RESET " %s\t ["FG_BCYAN"Provided by : %s"RESET"]\n", i, info->name, api_info->name);
+                }
+            }
+        }
+    printf(FG_BYELLOW "================================" RESET "\n");
+
+    // 3. User Selection
+    printf("Select device number (or press Enter for default): ");
+    char* choice_str = read_input(debug);
+
+    // If user just hits enter, return the default
+    if (strlen(choice_str) == 0) {
+        return default_dev;
+        }
+
+    // Convert string to integer
+    int choice = atoi(choice_str);
+
+    // 4. Validation: Prevent user from picking a mic or out-of-bounds index
+    if (choice < 0 || choice >= num_devices) {
+        special_print(ERROR, "Device Selection", "Invalid index. Falling back to default.");
+        return default_dev;
+        }
+
+    const PaDeviceInfo* selected_info = Pa_GetDeviceInfo(choice);
+    if (selected_info->maxOutputChannels == 0) {
+        special_print(ERROR, "Device Selection", "That is an INPUT device. Falling back to default.");
+        return default_dev;
+        }
+
+    return choice;
+    }
 
 
 #endif

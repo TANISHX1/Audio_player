@@ -174,12 +174,14 @@ int main(int argv, char* argc[]) {
         }
     special_print(SUCCESS, "Port_Audio", "PortAudio initialized Successfully");
 
-    // selecting output DEvice
-    PaDeviceIndex device = Pa_GetDefaultOutputDevice();
+    // selecting output DEvice dynamically
+    PaDeviceIndex device = select_output_device(debug);
     if (device == paNoDevice) {
-        special_print(ERROR, "Port_audio", "No output Device Available");
+        special_print(ERROR, "Port_audio", "No valid output device selected or available.");
         return 1;
-        }
+    }
+    
+    // Print the detailed table for the chosen device
     device_info(device);
 
     // Configure Device
