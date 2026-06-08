@@ -1,13 +1,14 @@
-<h1 align="center">WAV Audio Player</h1>
+<h1 align="center">WAV Audio Engine (TUI)</h1>
 
 <p align="center">
-  A lightweight, terminal-based audio player written in pure C.<br/>
-  Reads standard <code>.wav</code> files from disk and plays them through your speakers using <b>PortAudio</b>.
+  An interactive, terminal-based audio engine written in pure C.<br/>
+  Reads standard <code>.wav</code> files from disk, provides a dynamic TUI for playback control, and plays them through your speakers using <b>PortAudio</b> and <b>ncurses</b>.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Language-C11-blue?style=flat-square" alt="C11"/>
   <img src="https://img.shields.io/badge/Audio_API-PortAudio-green?style=flat-square" alt="PortAudio"/>
+  <img src="https://img.shields.io/badge/UI-ncurses-purple?style=flat-square" alt="ncurses"/>
   <img src="https://img.shields.io/badge/Format-WAV_(16--bit_PCM)-orange?style=flat-square" alt="WAV"/>
   <img src="https://img.shields.io/badge/Platform-Linux-lightgrey?style=flat-square" alt="Linux"/>
 </p>
@@ -100,13 +101,14 @@ Audio_player/
 **Prerequisites:**  
 - GCC (with C11 support)  
 - PortAudio development library (`libportaudio-dev` on Debian/Ubuntu)
+- ncurses library (`libncurses5-dev` or `libncursesw5-dev` on Debian/Ubuntu)
 
 ```bash
-# Install PortAudio (if not already installed)
-sudo apt install libportaudio-dev
+# Install Dependencies (if not already installed)
+sudo apt install libportaudio-dev libncurses5-dev libncursesw5-dev
 
 # Compile
-gcc -std=c11 -o wav_player_pa wav_player.c -lportaudio -lm
+gcc -std=c11 -o wav_player_pa wav_player.c -lportaudio -lm -lncurses
 
 # Run
 ./wav_player_pa
@@ -121,13 +123,27 @@ The program will prompt you for a file path. Enter the path to any `.wav` file a
 
 ## Features
 
+- **Interactive TUI (Terminal User Interface)** — dynamic UI built with `ncurses` featuring a progress bar, time tracking, and centered layout.
+- **Playback Controls** — pause/play support (`P` or `p`) and dynamic volume control (`+`/`-`) with visual percentage updates.
 - **Smart WAV parsing** — handles non-standard chunks gracefully instead of crashing
 - **Normalized audio output** — converts PCM integers to float for clean playback
 - **Real-time callback** — PortAudio pulls samples as needed, no buffer pre-loading delays
 - **Built-in memory tracking** — linked list based allocation tracker prevents memory leaks
 - **Styled terminal output** — color-coded logs for errors, debug info, and success messages
 - **Debug mode** — pass `d` flag to see internal parsing details and memory operations
+- **Hardware-Level Device Selection** — dynamically lists and lets you select available output audio devices. Supports playing audio directly to hardware (bypassing system mixers) if requirements like sample rates match.
 - **Device info display** — shows your audio hardware specs before playback starts
+
+---
+
+## Controls
+
+| Key | Action |
+|-----|--------|
+| `P` or `p` | Play / Pause |
+| `+` or `=` | Increase Volume (Caps at 100%) |
+| `-` | Decrease Volume (Caps at 0%) |
+| `Q` or `q` | Quit the player |
 
 ---
 
