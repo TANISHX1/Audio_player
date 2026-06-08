@@ -149,11 +149,7 @@ The program will prompt you for a file path. Enter the path to any `.wav` file a
 
 ## Demo
 
-
-
-https://github.com/user-attachments/assets/1793b326-e359-4834-8a6d-0eb0a014d205
-
-
+[Screencast From 2026-06-08 15-58-36.webm](https://github.com/user-attachments/assets/4e8a23d4-c3a1-4cbc-9753-6852988dd3f5)
 
 ---
 
